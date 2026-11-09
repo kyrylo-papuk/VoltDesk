@@ -19,9 +19,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
-    // Local convenience: create or upgrade the dev database on start.
+    // Local convenience: create or upgrade the dev database and fill it with demo data on start.
     await using var scope = app.Services.CreateAsyncScope();
-    await scope.ServiceProvider.GetRequiredService<VoltDeskDbContext>().Database.MigrateAsync();
+    var db = scope.ServiceProvider.GetRequiredService<VoltDeskDbContext>();
+    await db.Database.MigrateAsync();
+    await DemoDataSeeder.SeedAsync(db, DateOnly.FromDateTime(DateTime.Today));
 }
 
 app.MapControllers();

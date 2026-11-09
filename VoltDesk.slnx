@@ -5,4 +5,7 @@
     <Project Path="src/VoltDesk.Desktop/VoltDesk.Desktop.csproj" />
     <Project Path="src/VoltDesk.Infrastructure/VoltDesk.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VoltDesk.Core.Tests/VoltDesk.Core.Tests.csproj" />
+  </Folder>
 </Solution>
