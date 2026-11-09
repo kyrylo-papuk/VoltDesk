@@ -38,8 +38,9 @@ public sealed class AuditTests(ApiFactory api)
 
         var history = await manager.GetAsync<List<AuditEntryDto>>($"/api/projects/{project.Id}/history");
 
-        Assert.Contains(history, h => h.EntityType == "ProjectTask" && h.Action == "Added"
-            && h.Changes["Title"].New == "Short-circuit study");
+        var added = Assert.Single(history, h => h.EntityType == "ProjectTask" && h.Action == "Added");
+        Assert.Equal("Short-circuit study", added.Changes["Title"].New);
+        Assert.Equal(project.Id.ToString(), added.Changes["ProjectId"].New);
         Assert.Contains(history, h => h.Changes.TryGetValue("SD.DueDate", out var change) && change.New == "2027-03-01");
     }
 

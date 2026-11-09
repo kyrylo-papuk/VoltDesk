@@ -1,6 +1,34 @@
 <Application x:Class="VoltDesk.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VoltDesk.Desktop.Converters"
+             xmlns:vm="clr-namespace:VoltDesk.Desktop.ViewModels"
+             xmlns:views="clr-namespace:VoltDesk.Desktop.Views">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <converters:EnumDisplayConverter x:Key="EnumDisplay" />
+            <converters:StatusBrushConverter x:Key="StatusBrush" />
+            <converters:VisibleWhenConverter x:Key="VisibleWhen" />
+            <converters:DateOnlyConverter x:Key="DateOnly" />
+            <converters:EqualsConverter x:Key="EqualsConverter" />
+
+            <!-- Each page view model is shown with its view. -->
+            <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+                <views:LoginView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
+                <views:ProjectsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
+                <views:ProjectDetailView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ClientsViewModel}">
+                <views:ClientsView />
+            </DataTemplate>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

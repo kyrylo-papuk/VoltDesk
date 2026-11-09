@@ -5,10 +5,10 @@ namespace VoltDesk.Desktop;
 
 public partial class MainWindow : Window
 {
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(ShellViewModel shell)
     {
         InitializeComponent();
-        DataContext = viewModel;
-        Loaded += (_, _) => viewModel.CheckConnectionCommand.Execute(null);
+        DataContext = shell;
+        Loaded += async (_, _) => await shell.StartAsync();
     }
 }

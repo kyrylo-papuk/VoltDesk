@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,23 +23,42 @@ public partial class App : Application
         var apiBaseUrl = builder.Configuration["Api:BaseUrl"]
             ?? throw new InvalidOperationException("Api:BaseUrl is not configured.");
 
+        builder.Services.AddSingleton<Session>();
+        builder.Services.AddTransient<BearerTokenHandler>();
         builder.Services.AddHttpClient<ApiClient>(client =>
-        {
-            client.BaseAddress = new Uri(apiBaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(10);
-        });
-        builder.Services.AddTransient<MainViewModel>();
-        builder.Services.AddTransient<MainWindow>();
+            {
+                client.BaseAddress = new Uri(apiBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(15);
+            })
+            .AddHttpMessageHandler<BearerTokenHandler>();
+
+        builder.Services.Configure<DemoOptions>(builder.Configuration.GetSection(DemoOptions.Section));
+        builder.Services.AddSingleton<Navigator>();
+        builder.Services.AddSingleton<DialogService>();
+        builder.Services.AddSingleton<ShellViewModel>();
+        builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<ProjectsViewModel>();
+        builder.Services.AddTransient<ProjectDetailViewModel>();
+        builder.Services.AddTransient<ClientsViewModel>();
+        builder.Services.AddTransient<NewProjectViewModel>();
+        builder.Services.AddSingleton<MainWindow>();
 
         _host = builder.Build();
     }
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        // Escape hatch for virtual machines and remote sessions with broken GPU rendering.
+        if (Environment.GetEnvironmentVariable("VOLTDESK_SOFTWARE_RENDERING") == "1")
+        {
+            RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+        }
+
         base.OnStartup(e);
         await _host.StartAsync();
 
-        _host.Services.GetRequiredService<MainWindow>().Show();
+        MainWindow = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow.Show();
     }
 
     protected override async void OnExit(ExitEventArgs e)

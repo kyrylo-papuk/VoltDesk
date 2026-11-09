@@ -36,7 +36,14 @@ internal static class AuditCollector
                 continue;
             }
 
-            var changes = DescribeChanges(entry);
+            // New rows are described after saving: before that their keys are temporary values.
+            if (entry.State == EntityState.Added)
+            {
+                pending.Add(new PendingAudit(entry, EntityState.Added, Changes: null, KeysBeforeSave: null));
+                continue;
+            }
+
+            var changes = DescribeChanges(entry, entry.State);
             if (changes.Count == 0)
             {
                 continue;
@@ -60,23 +67,23 @@ internal static class AuditCollector
             RootType = keys.RootType,
             RootId = keys.RootId,
             Action = pending.State.ToString(),
-            Changes = JsonSerializer.Serialize(pending.Changes),
+            Changes = JsonSerializer.Serialize(pending.Changes ?? DescribeChanges(pending.Entry, pending.State)),
         };
     }
 
-    private static Dictionary<string, AuditValueChange> DescribeChanges(EntityEntry entry)
+    private static Dictionary<string, AuditValueChange> DescribeChanges(EntityEntry entry, EntityState state)
     {
         var prefix = entry.Entity is ProjectMilestone milestone ? $"{milestone.Stage.Abbreviation()}." : string.Empty;
         var changes = new Dictionary<string, AuditValueChange>();
         foreach (var property in entry.Properties)
         {
             var name = property.Metadata.Name;
-            if (IgnoredProperties.Contains(name) || property.Metadata.IsForeignKey() && entry.Entity is ProjectMilestone)
+            if (IgnoredProperties.Contains(name) || (property.Metadata.IsForeignKey() && entry.Entity is ProjectMilestone))
             {
                 continue;
             }
 
-            var (old, current) = entry.State switch
+            var (old, current) = state switch
             {
                 EntityState.Added => (null, Format(property.CurrentValue)),
                 EntityState.Deleted => (Format(property.OriginalValue), null),
@@ -121,7 +128,7 @@ internal static class AuditCollector
     internal sealed record PendingAudit(
         EntityEntry Entry,
         EntityState State,
-        Dictionary<string, AuditValueChange> Changes,
+        Dictionary<string, AuditValueChange>? Changes,
         AuditKeys? KeysBeforeSave);
 
     internal sealed record AuditKeys(string EntityType, int EntityId, string RootType, int RootId);

@@ -3,42 +3,49 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:services="clr-namespace:VoltDesk.Desktop.Services"
         xmlns:vm="clr-namespace:VoltDesk.Desktop.ViewModels"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="VoltDesk" Height="450" Width="800"
-        WindowStartupLocation="CenterScreen">
+        d:DataContext="{d:DesignInstance Type=vm:ShellViewModel}"
+        Title="VoltDesk" Width="1360" Height="860" MinWidth="1080" MinHeight="660"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI" FontSize="13"
+        Foreground="{StaticResource TextBrush}" Background="{StaticResource AppBackgroundBrush}">
     <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="VoltDesk" FontSize="32" FontWeight="SemiBold" HorizontalAlignment="Center" />
-            <TextBlock Text="Projects, tasks and panel schedules for an electrical design studio"
-                       Foreground="Gray" Margin="0,4,0,28" HorizontalAlignment="Center" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Ellipse Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Gray" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Health}" Value="{x:Static services:ApiHealth.Healthy}">
-                                    <Setter Property="Fill" Value="#2E7D32" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Health}" Value="{x:Static services:ApiHealth.DatabaseUnavailable}">
-                                    <Setter Property="Fill" Value="#ED6C02" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Health}" Value="{x:Static services:ApiHealth.Unreachable}">
-                                    <Setter Property="Fill" Value="#D32F2F" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
-            </StackPanel>
+        <!-- Sidebar, shown after sign-in -->
+        <Border Width="232" Background="{StaticResource SidebarBrush}"
+                Visibility="{Binding Session.IsSignedIn, Converter={StaticResource VisibleWhen}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="24,26,24,28">
+                    <TextBlock Text="⚡" FontSize="20" Foreground="{StaticResource BrandBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="VoltDesk" FontSize="19" FontWeight="Bold" Foreground="White" Margin="6,0,0,0" />
+                </StackPanel>
 
-            <Button Content="Check again" Command="{Binding CheckConnectionCommand}"
-                    Padding="16,6" Margin="0,16,0,0" HorizontalAlignment="Center" />
-        </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,22">
+                    <TextBlock Text="{Binding Session.User.FullName}" Foreground="White" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Session.RoleLabel}" Foreground="{StaticResource SidebarTextBrush}" FontSize="12" Margin="0,2,0,10" />
+                    <Button Content="Sign out" Style="{StaticResource LinkButton}" Foreground="{StaticResource SidebarTextBrush}"
+                            HorizontalAlignment="Left" Command="{Binding SignOutCommand}" />
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Text="WORKSPACE" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="24,0,0,8" />
+                    <Button Content="Projects" Style="{StaticResource NavButton}"
+                            Command="{Binding ShowProjectsCommand}"
+                            Tag="{Binding Navigator.Current.Section, Converter={StaticResource EqualsConverter}, ConverterParameter=Projects}"
+                            AutomationProperties.AutomationId="NavProjects" />
+                    <Button Content="Clients" Style="{StaticResource NavButton}"
+                            Command="{Binding ShowClientsCommand}"
+                            Tag="{Binding Navigator.Current.Section, Converter={StaticResource EqualsConverter}, ConverterParameter=Clients}"
+                            AutomationProperties.AutomationId="NavClients" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <ContentControl Grid.Column="1" Content="{Binding Navigator.Current}" Focusable="False" />
     </Grid>
 </Window>

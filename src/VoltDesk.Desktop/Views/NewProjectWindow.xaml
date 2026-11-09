@@ -1,0 +1,92 @@
+<Window x:Class="VoltDesk.Desktop.Views.NewProjectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:VoltDesk.Desktop.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:NewProjectViewModel}"
+        Title="New project" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="Segoe UI" FontSize="13" Background="{StaticResource AppBackgroundBrush}">
+    <StackPanel Margin="28,24">
+        <TextBlock Text="New project" Style="{StaticResource PageTitle}" FontSize="19" />
+        <TextBlock Text="The project starts in Schematic Design with a milestone for every stage."
+                   Style="{StaticResource Muted}" Margin="0,4,0,20" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Number" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding Number, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="NewNumber" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Name" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="NewName" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Text="Client" Style="{StaticResource FieldLabel}" Margin="0,14,0,4" />
+        <ComboBox ItemsSource="{Binding Clients}" DisplayMemberPath="Name" SelectedItem="{Binding Client}" AutomationProperties.AutomationId="NewClient" />
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="90" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Building type" Style="{StaticResource FieldLabel}" />
+                <ComboBox ItemsSource="{Binding BuildingTypes}" SelectedItem="{Binding BuildingType}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDisplay}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="City" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="NewCity" />
+            </StackPanel>
+            <StackPanel Grid.Column="4">
+                <TextBlock Text="State" Style="{StaticResource FieldLabel}" />
+                <ComboBox ItemsSource="{Binding States}" SelectedItem="{Binding State}" AutomationProperties.AutomationId="NewState" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Project manager" Style="{StaticResource FieldLabel}" />
+                <ComboBox ItemsSource="{Binding Managers}" DisplayMemberPath="FullName" SelectedItem="{Binding Manager}" AutomationProperties.AutomationId="NewManager" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Design fee, USD" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding Fee, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="NewFee" />
+            </StackPanel>
+        </Grid>
+
+        <Border Style="{StaticResource ErrorBanner}" Margin="0,18,0,0"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhen}}">
+            <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{StaticResource DangerBrush}" />
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0" />
+            <Button Content="Create project" Style="{StaticResource PrimaryButton}" IsDefault="True"
+                    Command="{Binding CreateCommand}"
+                    AutomationProperties.AutomationId="CreateProject" />
+        </StackPanel>
+    </StackPanel>
+</Window>
