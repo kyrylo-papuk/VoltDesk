@@ -32,6 +32,9 @@ public sealed partial class ShellViewModel : ObservableObject, IRecipient<Sessio
     private Task ShowProjectsAsync() => Navigator.OpenSectionAsync<ProjectsViewModel>();
 
     [RelayCommand]
+    private Task ShowTasksAsync() => Navigator.OpenSectionAsync<TaskBoardViewModel>();
+
+    [RelayCommand]
     private Task ShowClientsAsync() => Navigator.OpenSectionAsync<ClientsViewModel>();
 
     [RelayCommand]

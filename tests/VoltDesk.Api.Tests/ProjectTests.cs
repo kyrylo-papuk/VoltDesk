@@ -77,6 +77,27 @@ public sealed class ProjectTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Task_board_lists_only_tasks_of_active_projects()
+    {
+        var manager = await api.SignInAsync(ApiFactory.Manager);
+        var active = await manager.CreateProjectAsync();
+        var paused = await manager.CreateProjectAsync();
+        foreach (var project in new[] { active, paused })
+        {
+            await (await manager.PostJsonAsync($"/api/projects/{project.Id}/tasks",
+                new CreateTaskRequest("Board task", null, Discipline.Power, TaskPriority.Normal, null, null))).ReadAsync<TaskDto>();
+        }
+
+        await (await manager.PostJsonAsync($"/api/projects/{paused.Id}/hold", new VersionRequest(paused.Version))).ReadAsync<ProjectDto>();
+
+        var board = await manager.GetAsync<List<TaskDto>>("/api/tasks?activeProjectsOnly=true");
+        Assert.Contains(board, t => t.ProjectId == active.Id);
+        Assert.DoesNotContain(board, t => t.ProjectId == paused.Id);
+        var all = await manager.GetAsync<List<TaskDto>>($"/api/tasks?projectId={paused.Id}");
+        Assert.Single(all);
+    }
+
+    [Fact]
     public async Task Duplicate_project_number_returns_conflict_with_a_clear_message()
     {
         var manager = await api.SignInAsync(ApiFactory.Manager);

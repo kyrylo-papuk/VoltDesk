@@ -26,6 +26,9 @@
             <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
                 <views:ProjectDetailView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:TaskBoardViewModel}">
+                <views:TaskBoardView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ClientsViewModel}">
                 <views:ClientsView />
             </DataTemplate>

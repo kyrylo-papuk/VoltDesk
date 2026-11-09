@@ -85,11 +85,14 @@ on each request, so deactivating an employee or changing their role takes effect
 | Sign-in | Email and password, demo account shortcuts, live server status |
 | Projects | Search and status filter, stage and status badges, overdue stage dates in red |
 | Project card | Stage timeline with editable due dates, close stage / hold / resume / cancel, tasks by stage, change history |
+| Task board | Kanban of tasks in active projects: drag cards or use arrows, filter by project and assignee, edit and assign in a side panel, new task dialog |
 | Clients | Client list with search, contacts with primary flag, add and remove contacts |
 | New project | Dialog with client, building type, US state and manager pickers |
 
 - MVVM throughout: pages are view models, views are picked by `DataTemplate`, navigation keeps a back stack.
-- Actions are shown by role: engineers see projects and clients read-only.
+- Actions are shown by role: engineers see projects and clients read-only and work on the task board.
+- Board moves are optimistic: the card moves at once and goes back with the server's reason if the move is refused
+  (for example, a task without an assignee cannot start).
 - API errors arrive as the server's own messages. A version conflict reloads the record and says why;
   an expired session returns to sign-in.
 - If WPF renders a blank window (some VMs and remote sessions), start it with
@@ -144,7 +147,7 @@ dotnet ef migrations add <Name> --project src/VoltDesk.Infrastructure \
 - [x] 1. Domain and EF Core: clients, projects, design stages, tasks
 - [x] 2. REST API: CRUD, validation, JWT roles, audit log, integration tests
 - [x] 3. Desktop: sign-in, project list and cards, clients
-- [ ] 4. Desktop: task board
+- [x] 4. Desktop: task board
 - [ ] 5. Panel schedules: load calculation, phase balancing, Excel export
 - [ ] 6. Google Drive, Calendar and Sheets automation
 - [ ] 7. Packaging: Docker Compose, installer in Releases, demo

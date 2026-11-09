@@ -24,4 +24,20 @@ public sealed class DialogService(IServiceProvider services)
         window.ShowDialog();
         return created;
     }
+
+    public async Task<TaskDto?> ShowNewTaskAsync(int? projectId)
+    {
+        var viewModel = services.GetRequiredService<NewTaskViewModel>();
+        TaskDto? created = null;
+        var window = new NewTaskWindow { DataContext = viewModel, Owner = Application.Current.MainWindow };
+        viewModel.Created += (_, task) =>
+        {
+            created = task;
+            window.DialogResult = true;
+        };
+
+        await viewModel.LoadAsync(projectId);
+        window.ShowDialog();
+        return created;
+    }
 }

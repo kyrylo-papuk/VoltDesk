@@ -15,18 +15,20 @@ public sealed class TasksController(VoltDeskDbContext db, TimeProvider clock) : 
 {
     private DateOnly Today => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
+    /// <param name="activeProjectsOnly">Skip tasks of projects on hold, completed or cancelled (the task board).</param>
     [HttpGet]
     public Task<List<TaskDto>> List(
         [FromQuery] int? projectId,
         [FromQuery] int? assigneeId,
         [FromQuery] ProjectTaskStatus? status,
+        [FromQuery] bool activeProjectsOnly,
         CancellationToken cancellationToken) =>
-        Query(projectId, assigneeId, status, mineOnly: false).ToListAsync(cancellationToken);
+        Query(projectId, assigneeId, status, activeProjectsOnly, openOnly: false).ToListAsync(cancellationToken);
 
     /// <summary>Open tasks of the signed-in employee in active projects.</summary>
     [HttpGet("mine")]
     public Task<List<TaskDto>> Mine(CancellationToken cancellationToken) =>
-        Query(projectId: null, User.EmployeeId(), status: null, mineOnly: true).ToListAsync(cancellationToken);
+        Query(projectId: null, User.EmployeeId(), status: null, activeProjectsOnly: true, openOnly: true).ToListAsync(cancellationToken);
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskDto>> Get(int id, CancellationToken cancellationToken)
@@ -112,8 +114,12 @@ public sealed class TasksController(VoltDeskDbContext db, TimeProvider clock) : 
     private Task<string> ProjectNumber(ProjectTask task, CancellationToken cancellationToken) =>
         db.Projects.Where(p => p.Id == task.ProjectId).Select(p => p.Number).SingleAsync(cancellationToken);
 
-    /// <param name="mineOnly">Only open tasks of active projects, for the personal task list.</param>
-    private IQueryable<TaskDto> Query(int? projectId, int? assigneeId, ProjectTaskStatus? status, bool mineOnly)
+    private IQueryable<TaskDto> Query(
+        int? projectId,
+        int? assigneeId,
+        ProjectTaskStatus? status,
+        bool activeProjectsOnly,
+        bool openOnly)
     {
         var query =
             from task in db.ProjectTasks.AsNoTracking()
@@ -121,7 +127,8 @@ public sealed class TasksController(VoltDeskDbContext db, TimeProvider clock) : 
             where (projectId == null || task.ProjectId == projectId)
                 && (assigneeId == null || task.AssigneeId == assigneeId)
                 && (status == null || task.Status == status)
-                && (!mineOnly || (project.Status == ProjectStatus.Active && task.Status != ProjectTaskStatus.Done))
+                && (!activeProjectsOnly || project.Status == ProjectStatus.Active)
+                && (!openOnly || task.Status != ProjectTaskStatus.Done)
             orderby project.Number, task.DueDate
             select new TaskDto(
                 task.Id,

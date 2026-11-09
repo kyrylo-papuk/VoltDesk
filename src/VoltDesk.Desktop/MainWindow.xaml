@@ -38,6 +38,10 @@
                             Command="{Binding ShowProjectsCommand}"
                             Tag="{Binding Navigator.Current.Section, Converter={StaticResource EqualsConverter}, ConverterParameter=Projects}"
                             AutomationProperties.AutomationId="NavProjects" />
+                    <Button Content="Task board" Style="{StaticResource NavButton}"
+                            Command="{Binding ShowTasksCommand}"
+                            Tag="{Binding Navigator.Current.Section, Converter={StaticResource EqualsConverter}, ConverterParameter=Tasks}"
+                            AutomationProperties.AutomationId="NavTasks" />
                     <Button Content="Clients" Style="{StaticResource NavButton}"
                             Command="{Binding ShowClientsCommand}"
                             Tag="{Binding Navigator.Current.Section, Converter={StaticResource EqualsConverter}, ConverterParameter=Clients}"

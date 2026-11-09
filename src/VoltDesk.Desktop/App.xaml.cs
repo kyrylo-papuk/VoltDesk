@@ -41,6 +41,8 @@ public partial class App : Application
         builder.Services.AddTransient<ProjectDetailViewModel>();
         builder.Services.AddTransient<ClientsViewModel>();
         builder.Services.AddTransient<NewProjectViewModel>();
+        builder.Services.AddTransient<TaskBoardViewModel>();
+        builder.Services.AddTransient<NewTaskViewModel>();
         builder.Services.AddSingleton<MainWindow>();
 
         _host = builder.Build();

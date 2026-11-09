@@ -78,6 +78,26 @@ public sealed class ApiClient(HttpClient http)
     public Task<ClientDto> RemoveContactAsync(int clientId, int contactId, string version) =>
         SendAsync<ClientDto>(HttpMethod.Delete, WithQuery($"api/clients/{clientId}/contacts/{contactId}", ("version", version)));
 
+    // Tasks
+    public Task<List<TaskDto>> GetBoardTasksAsync(int? projectId, int? assigneeId) =>
+        SendAsync<List<TaskDto>>(HttpMethod.Get, WithQuery(
+            "api/tasks",
+            ("activeProjectsOnly", "true"),
+            ("projectId", projectId?.ToString()),
+            ("assigneeId", assigneeId?.ToString())));
+
+    public Task<TaskDto> CreateTaskAsync(int projectId, CreateTaskRequest request) =>
+        SendAsync<TaskDto>(HttpMethod.Post, $"api/projects/{projectId}/tasks", request);
+
+    public Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskRequest request) =>
+        SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{id}", request);
+
+    public Task<TaskDto> AssignTaskAsync(int id, int? assigneeId, string version) =>
+        SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{id}/assignee", new AssignTaskRequest(assigneeId, version));
+
+    public Task<TaskDto> MoveTaskAsync(int id, ProjectTaskStatus status, string version) =>
+        SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{id}/status", new MoveTaskRequest(status, version));
+
     // Employees
     public Task<List<EmployeeDto>> GetEmployeesAsync() => SendAsync<List<EmployeeDto>>(HttpMethod.Get, "api/employees");
 
