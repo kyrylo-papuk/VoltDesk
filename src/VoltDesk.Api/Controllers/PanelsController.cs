@@ -6,13 +6,14 @@ using VoltDesk.Core.Common;
 using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 using VoltDesk.Infrastructure.Export;
+using VoltDesk.Infrastructure.Integrations.Google;
 using VoltDesk.Infrastructure.Persistence;
 
 namespace VoltDesk.Api.Controllers;
 
 /// <summary>Panel schedules. Engineers own this work, so every signed-in employee can edit.</summary>
 [ApiController]
-public sealed class PanelsController(VoltDeskDbContext db) : ControllerBase
+public sealed class PanelsController(VoltDeskDbContext db, IGoogleWorkspace google, GoogleFolders folders) : ControllerBase
 {
     private const string ExcelContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -121,6 +122,24 @@ public sealed class PanelsController(VoltDeskDbContext db) : ControllerBase
             .SingleAsync(cancellationToken);
         var bytes = PanelScheduleWorkbook.Build(panel, project.Number, project.Name);
         return File(bytes, ExcelContentType, $"{project.Number} {panel.Name} panel schedule.xlsx");
+    }
+
+    /// <summary>Uploads the schedule workbook to the "Panel schedules" folder of the project in Google Drive.</summary>
+    [HttpPost("api/panels/{id:int}/export/google-drive")]
+    public async Task<ActionResult<ExternalFileDto>> ExportToDrive(int id, CancellationToken cancellationToken)
+    {
+        var panel = await LoadAsync(id, cancellationToken);
+        if (panel is null)
+        {
+            return NotFound();
+        }
+
+        var project = await db.Projects.SingleAsync(p => p.Id == panel.ProjectId, cancellationToken);
+        var folderId = await folders.SubfolderIdAsync(project, "Panel schedules", cancellationToken);
+        var fileName = $"{project.Number} {panel.Name} panel schedule {DateTime.Today:yyyy-MM-dd}.xlsx";
+        var file = await google.UploadFileAsync(
+            folderId, fileName, PanelScheduleWorkbook.Build(panel, project.Number, project.Name), ExcelContentType, cancellationToken);
+        return new ExternalFileDto(fileName, file.Url);
     }
 
     private async Task<ActionResult<PanelDto>> ChangeAsync(

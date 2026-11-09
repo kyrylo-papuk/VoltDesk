@@ -6,13 +6,14 @@ using VoltDesk.Contracts;
 using VoltDesk.Core.Common;
 using VoltDesk.Core.Employees;
 using VoltDesk.Core.Projects;
+using VoltDesk.Infrastructure.Integrations;
 using VoltDesk.Infrastructure.Persistence;
 
 namespace VoltDesk.Api.Controllers;
 
 [ApiController]
 [Route("api/projects")]
-public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock) : ControllerBase
+public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock, IIntegrationEvents events) : ControllerBase
 {
     private DateOnly Today => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -77,7 +78,7 @@ public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock)
     public async Task<ActionResult<ProjectDto>> Get(int id, CancellationToken cancellationToken)
     {
         var project = await Load(id, cancellationToken);
-        return project is null ? NotFound() : project.ToDto(db, Today);
+        return project is null ? NotFound() : await ToDtoAsync(project, cancellationToken);
     }
 
     [HttpGet("{id:int}/history")]
@@ -95,8 +96,9 @@ public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock)
         var project = Project.Create(
             request.Number, request.Name, client, request.BuildingType, request.City, request.State, manager, request.Fee);
         db.Projects.Add(project);
+        events.Publish(new ProjectCreated(project.Number));
         await db.SaveChangesAsync(cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = project.Id }, project.ToDto(db, Today));
+        return CreatedAtAction(nameof(Get), new { id = project.Id }, await ToDtoAsync(project, cancellationToken));
     }
 
     [HttpPut("{id:int}")]
@@ -126,12 +128,12 @@ public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock)
         DesignStage stage,
         ScheduleMilestoneRequest request,
         CancellationToken cancellationToken) =>
-        Change(id, request.Version, p => p.ScheduleMilestone(stage, request.DueDate), cancellationToken);
+        Change(id, request.Version, p => p.ScheduleMilestone(stage, request.DueDate), cancellationToken, milestonesChanged: true);
 
     [HttpPost("{id:int}/advance")]
     [Authorize(Policy = Policies.ManageProjects)]
     public Task<ActionResult<ProjectDto>> Advance(int id, VersionRequest request, CancellationToken cancellationToken) =>
-        Change(id, request.Version, p => p.AdvanceStage(Today), cancellationToken);
+        Change(id, request.Version, p => p.AdvanceStage(Today), cancellationToken, milestonesChanged: true);
 
     [HttpPost("{id:int}/hold")]
     [Authorize(Policy = Policies.ManageProjects)]
@@ -170,7 +172,8 @@ public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock)
         int id,
         string version,
         Action<Project> change,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool milestonesChanged = false)
     {
         var project = await Load(id, cancellationToken);
         if (project is null)
@@ -180,8 +183,23 @@ public sealed class ProjectsController(VoltDeskDbContext db, TimeProvider clock)
 
         db.Entry(project).ExpectVersion(version);
         change(project);
+        if (milestonesChanged)
+        {
+            // Saved in the same transaction as the change; the calendar is updated in the background.
+            events.Publish(new MilestonesChanged(project.Id));
+        }
+
         await db.SaveChangesAsync(cancellationToken);
-        return project.ToDto(db, Today);
+        return await ToDtoAsync(project, cancellationToken);
+    }
+
+    private async Task<ProjectDto> ToDtoAsync(Project project, CancellationToken cancellationToken)
+    {
+        var folderUrl = await db.ExternalLinks
+            .Where(l => l.Kind == ExternalLink.ProjectFolder && l.ProjectId == project.Id)
+            .Select(l => l.Url)
+            .SingleOrDefaultAsync(cancellationToken);
+        return project.ToDto(db, Today, folderUrl);
     }
 
     // Domain rules such as "no open tasks when closing a stage" need the tasks loaded.

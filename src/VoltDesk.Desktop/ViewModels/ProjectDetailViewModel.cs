@@ -110,6 +110,15 @@ public sealed partial class ProjectDetailViewModel(ApiClient api, Session sessio
     private Task BackAsync() => navigator.GoBackAsync();
 
     [RelayCommand]
+    private void OpenDocumentsFolder()
+    {
+        if (Project?.DocumentsFolderUrl is { } url)
+        {
+            Browser.Open(url);
+        }
+    }
+
+    [RelayCommand]
     private Task AdvanceAsync() => ChangeStateAsync("advance", "Stage closed.");
 
     [RelayCommand]

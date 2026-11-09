@@ -3,6 +3,8 @@ using VoltDesk.Api;
 using VoltDesk.Api.Auth;
 using VoltDesk.Api.Errors;
 using VoltDesk.Infrastructure;
+using VoltDesk.Infrastructure.Integrations;
+using VoltDesk.Infrastructure.Integrations.Google;
 using VoltDesk.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,10 @@ var connectionString = builder.Configuration.GetConnectionString("VoltDesk")
 
 builder.Services.AddVoltDeskAuth(builder.Configuration);
 builder.Services.AddInfrastructure(connectionString);
+
+var googleSection = builder.Configuration.GetSection(GoogleOptions.Section);
+builder.Services.Configure<GoogleOptions>(googleSection);
+builder.Services.AddGoogleIntegration(googleSection.Get<GoogleOptions>() ?? new GoogleOptions());
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddProblemDetails();

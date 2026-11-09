@@ -4,9 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 using VoltDesk.Contracts;
+using VoltDesk.Infrastructure.Integrations.Google;
 using VoltDesk.Infrastructure.Persistence;
 
 [assembly: AssemblyFixture(typeof(VoltDesk.Api.Tests.ApiFactory))]
@@ -28,6 +30,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         Converters = { new JsonStringEnumConverter() },
     };
 
+    private readonly SemaphoreSlim _outboxGate = new(1, 1);
+
+    /// <summary>Stands in for Google; the background worker is off and tests deliver the outbox themselves.</summary>
+    public FakeGoogleWorkspace Google { get; } = new();
+
     private readonly MsSqlContainer _database = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2025-latest").Build();
 
     public async ValueTask InitializeAsync()
@@ -36,6 +43,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         // Starting the server runs Program, which migrates and seeds the database.
         _ = Server;
+
+        // Create the shared Drive root up front, so parallel tests never race to create it.
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<GoogleFolders>().EnsureRootAsync(CancellationToken.None);
     }
 
     public override async ValueTask DisposeAsync()
@@ -54,6 +65,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         return client;
     }
 
+    /// <summary>Delivers pending outbox messages, one test at a time so deliveries never overlap.</summary>
+    public async Task ProcessOutboxAsync()
+    {
+        await _outboxGate.WaitAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            await using var scope = Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<GoogleSyncProcessor>().ProcessDueAsync(TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            _outboxGate.Release();
+        }
+    }
+
     public async Task<T> WithDbAsync<T>(Func<VoltDeskDbContext, Task<T>> query)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -68,5 +94,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Database:SeedDemoData", "true");
         builder.UseSetting("Auth:LoginAttemptsPerMinute", "1000");
+        builder.UseSetting("Google:Enabled", "true");
+        builder.UseSetting("Google:RunWorker", "false");
+        builder.ConfigureTestServices(services => services.AddSingleton<IGoogleWorkspace>(Google));
     }
 }

@@ -146,6 +146,15 @@ public sealed class ApiClient(HttpClient http)
         }
     }
 
+    // Google Workspace
+    public Task<GoogleStatusDto> GetGoogleStatusAsync() => SendAsync<GoogleStatusDto>(HttpMethod.Get, "api/integrations/google");
+
+    public Task<ExternalFileDto> SavePanelToDriveAsync(int panelId) =>
+        SendAsync<ExternalFileDto>(HttpMethod.Post, $"api/panels/{panelId}/export/google-drive");
+
+    public Task<ExternalFileDto> ExportWorkloadToSheetsAsync() =>
+        SendAsync<ExternalFileDto>(HttpMethod.Post, "api/reports/workload/google-sheets");
+
     // Employees
     public Task<List<EmployeeDto>> GetEmployeesAsync() => SendAsync<List<EmployeeDto>>(HttpMethod.Get, "api/employees");
 

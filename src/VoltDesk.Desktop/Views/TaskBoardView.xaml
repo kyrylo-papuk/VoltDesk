@@ -13,6 +13,11 @@
                 <TextBlock Text="Active projects only. Drag cards between columns or use the arrows."
                            Style="{StaticResource Muted}" Margin="0,4,0,0" />
             </StackPanel>
+            <Button Content="Workload → Google Sheets" Margin="0,0,130,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Command="{Binding ExportWorkloadCommand}"
+                    Visibility="{Binding CanExportWorkload, Converter={StaticResource VisibleWhen}}"
+                    AutomationProperties.AutomationId="ExportWorkload" />
             <Button Content="+  New task" Style="{StaticResource PrimaryButton}"
                     HorizontalAlignment="Right" VerticalAlignment="Top"
                     Command="{Binding NewTaskCommand}"

@@ -3,6 +3,7 @@ using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
 using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
+using VoltDesk.Infrastructure.Integrations;
 using VoltDesk.Infrastructure.Persistence.Auditing;
 
 namespace VoltDesk.Infrastructure.Persistence;
@@ -27,6 +28,10 @@ public sealed class VoltDeskDbContext(
     public DbSet<Circuit> Circuits => Set<Circuit>();
 
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    public DbSet<OutboxMessage> Outbox => Set<OutboxMessage>();
+
+    public DbSet<ExternalLink> ExternalLinks => Set<ExternalLink>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess) =>
         throw new NotSupportedException("Use SaveChangesAsync: saves are audited inside a transaction.");

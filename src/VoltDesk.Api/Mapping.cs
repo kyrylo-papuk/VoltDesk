@@ -22,7 +22,7 @@ internal static class Mapping
             .Select(c => new ContactDto(c.Id, c.FullName, c.Title, c.Email, c.Phone, c.IsPrimary))],
         db.Entry(client).Version());
 
-    public static ProjectDto ToDto(this Project project, VoltDeskDbContext db, DateOnly today) => new(
+    public static ProjectDto ToDto(this Project project, VoltDeskDbContext db, DateOnly today, string? documentsFolderUrl) => new(
         project.Id,
         project.Number,
         project.Name,
@@ -42,7 +42,8 @@ internal static class Mapping
             .ThenBy(t => t.Status)
             .ThenByDescending(t => t.Priority)
             .Select(t => t.ToDto(db, project.Number))],
-        db.Entry(project).Version());
+        db.Entry(project).Version(),
+        documentsFolderUrl);
 
     public static PanelDto ToDto(this ElectricalPanel panel, VoltDeskDbContext db, string projectNumber)
     {

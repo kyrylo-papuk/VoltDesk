@@ -391,6 +391,97 @@ namespace VoltDesk.Infrastructure.Persistence.Migrations
                     b.ToTable("ProjectTasks");
                 });
 
+            modelBuilder.Entity("VoltDesk.Infrastructure.Integrations.ExternalLink", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<int?>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("Kind", "Key")
+                        .IsUnique()
+                        .HasFilter("[ProjectId] IS NULL");
+
+                    b.HasIndex("Kind", "ProjectId", "Key")
+                        .IsUnique()
+                        .HasFilter("[ProjectId] IS NOT NULL");
+
+                    b.ToTable("ExternalLinks");
+                });
+
+            modelBuilder.Entity("VoltDesk.Infrastructure.Integrations.OutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("FailedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt", "FailedAt", "NextAttemptAt");
+
+                    b.ToTable("OutboxMessages", (string)null);
+                });
+
             modelBuilder.Entity("VoltDesk.Infrastructure.Persistence.Auditing.AuditEntry", b =>
                 {
                     b.Property<long>("Id")
@@ -527,6 +618,14 @@ namespace VoltDesk.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Assignee");
+                });
+
+            modelBuilder.Entity("VoltDesk.Infrastructure.Integrations.ExternalLink", b =>
+                {
+                    b.HasOne("VoltDesk.Core.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("VoltDesk.Infrastructure.Persistence.Auditing.AuditEntry", b =>

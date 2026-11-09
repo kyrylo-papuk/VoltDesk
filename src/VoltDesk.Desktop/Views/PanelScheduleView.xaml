@@ -68,6 +68,9 @@
                             Command="{Binding BalanceCommand}" AutomationProperties.AutomationId="Balance"
                             ToolTip="Rearrange circuits across slots to even out the phase loads" />
                     <Button Content="Export to Excel" Command="{Binding ExportCommand}" AutomationProperties.AutomationId="Export" />
+                    <Button Content="Save to Drive" Margin="8,0,0,0" Command="{Binding SaveToDriveCommand}"
+                            Visibility="{Binding GoogleEnabled, Converter={StaticResource VisibleWhen}}"
+                            AutomationProperties.AutomationId="SaveToDrive" />
                 </StackPanel>
             </Grid>
 
@@ -78,8 +81,13 @@
             </Border>
             <Border Style="{StaticResource InfoBanner}" Margin="0,16,0,0"
                     Visibility="{Binding InfoMessage, Converter={StaticResource VisibleWhen}}">
-                <TextBlock Text="{Binding InfoMessage}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"
-                           AutomationProperties.AutomationId="Info" />
+                <StackPanel>
+                    <TextBlock Text="{Binding InfoMessage}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"
+                               AutomationProperties.AutomationId="Info" />
+                    <Button Content="Open in Google Drive ↗" Style="{StaticResource LinkButton}" HorizontalAlignment="Left" Margin="0,4,0,0"
+                            Command="{Binding OpenDriveFileCommand}"
+                            Visibility="{Binding DriveFileUrl, Converter={StaticResource VisibleWhen}}" />
+                </StackPanel>
             </Border>
 
             <!-- Totals -->

@@ -7,6 +7,7 @@ using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
 using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
+using VoltDesk.Infrastructure.Integrations;
 
 namespace VoltDesk.Infrastructure.Persistence.Auditing;
 
@@ -26,7 +27,9 @@ internal static class AuditCollector
         var pending = new List<PendingAudit>();
         foreach (var entry in tracker.Entries())
         {
-            if (entry.Entity is AuditEntry || entry.State is EntityState.Unchanged or EntityState.Detached)
+            // Only business data is audited, not the audit log itself or integration bookkeeping.
+            if (entry.Entity is AuditEntry or OutboxMessage or ExternalLink
+                || entry.State is EntityState.Unchanged or EntityState.Detached)
             {
                 continue;
             }

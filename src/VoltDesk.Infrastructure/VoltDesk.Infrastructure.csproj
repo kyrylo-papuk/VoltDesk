@@ -7,7 +7,11 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" />
+    <PackageReference Include="Google.Apis.Calendar.v3" />
+    <PackageReference Include="Google.Apis.Drive.v3" />
+    <PackageReference Include="Google.Apis.Sheets.v4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Identity.Core" />
   </ItemGroup>
 

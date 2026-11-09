@@ -59,6 +59,42 @@ the demo panel LP-2A it takes the imbalance from 90% to 7%.
 **Excel export** writes the schedule with per-phase VA columns whose totals are `SUM` formulas,
 so the workbook stays correct when someone edits a load by hand.
 
+## Google Workspace
+
+Optional and off by default; everything else works without it. When switched on:
+
+| Trigger | Result in Google |
+|---|---|
+| Project created | Drive folder `<number> <name>` under "VoltDesk projects" with stage subfolders, Calculations, Panel schedules, Correspondence; linked on the project card |
+| Milestone scheduled, moved or closed | One all-day Calendar event per stage, updated in place (✓ once the stage is closed) |
+| "Save to Drive" on a panel | The schedule workbook uploaded to the project's Panel schedules folder |
+| "Workload → Google Sheets" on the board | A new sheet with every employee's open tasks, overdue tasks and estimated hours |
+
+**Transactional outbox.** Project and milestone changes write an event to an outbox table in the
+same transaction as the change. A background worker delivers events to Google with exponential
+back-off (30 s, 1 min, 2 min…, eight attempts), so a Google outage never fails or slows down a
+user's request. Created Drive folders and calendar events are remembered as they are made, so a
+retry continues instead of duplicating. These links live outside the aggregates: background sync
+never changes a project's version and never causes a false "changed by someone else".
+
+Access is least-privilege: `drive.file` (only files the app created) and `calendar.events`.
+
+To switch it on:
+
+1. In Google Cloud Console create a project and enable the Drive, Calendar and Sheets APIs.
+2. Configure the OAuth consent screen (External, testing) and add the studio account as a test user.
+3. Create an OAuth client ID of type **Desktop app**.
+4. Get a refresh token: `dotnet run --project tools/VoltDesk.GoogleAuth -- <client-id> <client-secret>`
+5. Store the settings in user secrets (never in the repository):
+
+```bash
+cd src/VoltDesk.Api
+dotnet user-secrets set Google:Enabled true
+dotnet user-secrets set Google:ClientId <client-id>
+dotnet user-secrets set Google:ClientSecret <client-secret>
+dotnet user-secrets set Google:RefreshToken <refresh-token>
+```
+
 ## API
 
 REST API under `/api`, documented with OpenAPI (Swagger UI at `/swagger` in Development).
@@ -69,7 +105,8 @@ REST API under `/api`, documented with OpenAPI (Swagger UI at `/swagger` in Deve
 | Clients | list with search, details, create, rename, add / edit / remove contacts, history |
 | Projects | list with filters, details with milestones and tasks, create, edit, change manager, schedule milestones, advance / hold / resume / cancel, history |
 | Tasks | list, my open tasks, create, edit, assign, move on the board |
-| Panels | list per project, create, edit, add / edit / move / remove circuits, balance phases, Excel export, history |
+| Panels | list per project, create, edit, add / edit / move / remove circuits, balance phases, Excel export, save to Drive, history |
+| Integrations | Google status, workload report to Google Sheets |
 | Employees | list, create, change role, deactivate / reactivate |
 
 **Roles.** Engineers read everything, work on tasks and edit panel schedules. Project managers also manage clients,
@@ -85,6 +122,7 @@ on each request, so deactivating an employee or changing their role takes effect
 | 409 | Someone else changed the record (stale version), or a duplicate number, name or email |
 | 422 | A business rule was violated, e.g. closing a stage with open tasks |
 | 429 | Too many sign-in attempts |
+| 503 | A Google feature was used while the integration is off |
 
 ### Design decisions
 
@@ -133,7 +171,8 @@ on each request, so deactivating an employee or changing their role takes effect
 | `src/VoltDesk.Api` | REST API used by the desktop client |
 | `src/VoltDesk.Desktop` | WPF client |
 | `tests/VoltDesk.Core.Tests` | Unit tests for the domain rules |
-| `tests/VoltDesk.Api.Tests` | Integration tests: real API + SQL Server in a container |
+| `tests/VoltDesk.Api.Tests` | Integration tests: real API + SQL Server in a container, Google faked |
+| `tools/VoltDesk.GoogleAuth` | One-time Google sign-in that prints a refresh token |
 
 ## Run locally
 
@@ -174,5 +213,5 @@ dotnet ef migrations add <Name> --project src/VoltDesk.Infrastructure \
 - [x] 3. Desktop: sign-in, project list and cards, clients
 - [x] 4. Desktop: task board
 - [x] 5. Panel schedules: load calculation, phase balancing, Excel export
-- [ ] 6. Google Drive, Calendar and Sheets automation
+- [x] 6. Google Drive, Calendar and Sheets automation
 - [ ] 7. Packaging: Docker Compose, installer in Releases, demo

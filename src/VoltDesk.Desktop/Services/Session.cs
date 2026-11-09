@@ -17,6 +17,10 @@ public sealed partial class Session : ObservableObject
 
     public bool IsSignedIn => User is not null;
 
+    /// <summary>Whether the server has the Google Workspace integration switched on.</summary>
+    [ObservableProperty]
+    public partial bool GoogleEnabled { get; set; }
+
     public bool CanManageProjects => User?.Role is EmployeeRole.ProjectManager or EmployeeRole.Admin;
 
     public string RoleLabel => User?.Role switch

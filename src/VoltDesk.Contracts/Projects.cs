@@ -36,7 +36,8 @@ public sealed record ProjectDto(
     decimal Fee,
     IReadOnlyList<MilestoneDto> Milestones,
     IReadOnlyList<TaskDto> Tasks,
-    string Version);
+    string Version,
+    string? DocumentsFolderUrl);
 
 public sealed record MilestoneDto(DesignStage Stage, DateOnly? DueDate, DateOnly? CompletedOn, bool IsOverdue);
 

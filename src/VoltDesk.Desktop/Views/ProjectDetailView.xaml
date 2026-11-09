@@ -30,6 +30,9 @@
                         </Border>
                     </StackPanel>
                     <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Muted}" Margin="0,6,0,0" />
+                    <Button Content="Project folder in Google Drive ↗" Style="{StaticResource LinkButton}" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Command="{Binding OpenDocumentsFolderCommand}"
+                            Visibility="{Binding Project.DocumentsFolderUrl, Converter={StaticResource VisibleWhen}}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top"
                             Visibility="{Binding CanManage, Converter={StaticResource VisibleWhen}}">

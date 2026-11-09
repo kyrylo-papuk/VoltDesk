@@ -51,6 +51,8 @@ public sealed partial class TaskBoardViewModel(ApiClient api, Session session, D
 
     public bool CanManage => session.CanManageProjects;
 
+    public bool CanExportWorkload => session.CanManageProjects && session.GoogleEnabled;
+
     public IReadOnlyList<BoardColumn> Columns { get; } =
     [
         new(ProjectTaskStatus.ToDo, "To do"),
@@ -190,6 +192,14 @@ public sealed partial class TaskBoardViewModel(ApiClient api, Session session, D
             SelectedCard = Columns.SelectMany(c => c.Cards).FirstOrDefault(c => c.Task.Id == created.Id);
         }
     }
+
+    [RelayCommand]
+    private Task ExportWorkloadAsync() => RunAsync(async () =>
+    {
+        var sheet = await api.ExportWorkloadToSheetsAsync();
+        InfoMessage = $"Workload report \"{sheet.Name}\" created in Google Sheets.";
+        Browser.Open(sheet.Url);
+    });
 
     private Task SaveAssigneeAsync(int? assigneeId) => RunAsync(
         async () =>

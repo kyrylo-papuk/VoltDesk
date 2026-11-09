@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using VoltDesk.Core.Common;
+using VoltDesk.Infrastructure.Integrations.Google;
 using VoltDesk.Infrastructure.Persistence;
 
 namespace VoltDesk.Api.Errors;
@@ -23,6 +24,7 @@ internal sealed class ApiExceptionHandler(IProblemDetailsService problemDetails)
         {
             DomainException ex => (StatusCodes.Status422UnprocessableEntity, "Business rule violated", ex.Message),
             InvalidVersionException ex => (StatusCodes.Status400BadRequest, "Invalid version", ex.Message),
+            IntegrationDisabledException ex => (StatusCodes.Status503ServiceUnavailable, "Integration not configured", ex.Message),
             DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "Changed by someone else",
                 "This record was changed by another user after you opened it. Reload it and try again."),
             DbUpdateException { InnerException: SqlException { Number: 2601 or 2627 } sql } =>

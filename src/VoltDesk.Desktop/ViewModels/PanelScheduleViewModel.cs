@@ -44,11 +44,16 @@ public sealed record PhaseBar(PhaseLoadDto Load, int BusRatingAmps)
     public string Level => Percent >= 100 ? "Overload" : Percent > 80 ? "Heavy" : "Normal";
 }
 
-public sealed partial class PanelScheduleViewModel(ApiClient api, Navigator navigator, DialogService dialogs) : PageViewModel
+public sealed partial class PanelScheduleViewModel(ApiClient api, Navigator navigator, DialogService dialogs, Session session) : PageViewModel
 {
     private static readonly string ExcelFilter = "Excel workbook (*.xlsx)|*.xlsx";
 
     public override string Section => "Projects";
+
+    public bool GoogleEnabled => session.GoogleEnabled;
+
+    [ObservableProperty]
+    public partial string? DriveFileUrl { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Subtitle), nameof(TotalKva), nameof(IsImbalanced), nameof(HasWarnings))]
@@ -188,6 +193,23 @@ public sealed partial class PanelScheduleViewModel(ApiClient api, Navigator navi
             InfoMessage = $"Saved {path}";
         }
     });
+
+    [RelayCommand]
+    private Task SaveToDriveAsync() => RunAsync(async () =>
+    {
+        var file = await api.SavePanelToDriveAsync(Panel!.Id);
+        DriveFileUrl = file.Url;
+        InfoMessage = $"Saved \"{file.Name}\" to the project's Panel schedules folder in Google Drive.";
+    });
+
+    [RelayCommand]
+    private void OpenDriveFile()
+    {
+        if (DriveFileUrl is { } url)
+        {
+            Browser.Open(url);
+        }
+    }
 
     private async Task ReloadAsync() => Show(await api.GetPanelAsync(Panel!.Id));
 

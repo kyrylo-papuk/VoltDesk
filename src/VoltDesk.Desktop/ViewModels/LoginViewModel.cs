@@ -68,6 +68,7 @@ public sealed partial class LoginViewModel(
         {
             var login = await api.LoginAsync(Email.Trim(), Password);
             session.Start(login);
+            session.GoogleEnabled = (await api.GetGoogleStatusAsync()).Enabled;
             Password = string.Empty;
             await navigator.OpenSectionAsync<ProjectsViewModel>();
         }
