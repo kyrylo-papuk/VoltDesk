@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
@@ -11,7 +12,14 @@ namespace VoltDesk.Infrastructure.Persistence;
 /// </summary>
 public static class DemoDataSeeder
 {
-    public static async Task SeedAsync(VoltDeskDbContext db, DateOnly today, CancellationToken cancellationToken = default)
+    /// <summary>Password of every demo account. Demo data is only seeded in development and tests.</summary>
+    public const string DemoPassword = "VoltDesk-demo-2026";
+
+    public static async Task SeedAsync(
+        VoltDeskDbContext db,
+        IPasswordHasher<Employee> hasher,
+        DateOnly today,
+        CancellationToken cancellationToken = default)
     {
         if (await db.Employees.AnyAsync(cancellationToken))
         {
@@ -27,6 +35,10 @@ public static class DemoDataSeeder
         var lena = Employee.Create("Lena Hoffman", "lena.hoffman@voltdesk.example", EmployeeRole.Engineer);
         var ray = Employee.Create("Ray Mendez", "ray.mendez@voltdesk.example", EmployeeRole.Engineer);
         ray.Deactivate();
+        foreach (var employee in new[] { dana, marcus, avery, sam, priya, tom, lena, ray })
+        {
+            employee.SetPasswordHash(hasher.HashPassword(employee, DemoPassword));
+        }
 
         var cedarValley = Client.Create("Cedar Valley Health System");
         cedarValley.AddContact("Mia Chen", "Facilities Director", "mia.chen@cedarvalley.example", "+1 303 555 0142");

@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    name: Build and unit tests
     # WPF builds only on Windows.
     runs-on: windows-latest
     steps:
@@ -16,4 +17,15 @@ jobs:
           global-json-file: global.json
       - run: dotnet restore
       - run: dotnet build --no-restore --configuration Release
-      - run: dotnet test --no-build --configuration Release
+      - run: dotnet test --project tests/VoltDesk.Core.Tests --no-build --configuration Release
+
+  integration:
+    name: API integration tests
+    # SQL Server runs in a Linux container (Testcontainers), which Windows runners do not support.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet test --project tests/VoltDesk.Api.Tests --configuration Release

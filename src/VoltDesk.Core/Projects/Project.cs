@@ -190,10 +190,11 @@ public sealed class Project : Entity
         Discipline discipline,
         TaskPriority priority = TaskPriority.Normal,
         DateOnly? dueDate = null,
-        decimal? estimatedHours = null)
+        decimal? estimatedHours = null,
+        string? description = null)
     {
         EnsureActive();
-        var task = ProjectTask.Create(Stage, title, discipline, priority, dueDate, estimatedHours);
+        var task = ProjectTask.Create(Stage, title, description, discipline, priority, dueDate, estimatedHours);
         _tasks.Add(task);
         return task;
     }

@@ -2,10 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VoltDesk.Core\VoltDesk.Core.csproj" />
+    <ProjectReference Include="..\VoltDesk.Contracts\VoltDesk.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
   </ItemGroup>
 
   <PropertyGroup>

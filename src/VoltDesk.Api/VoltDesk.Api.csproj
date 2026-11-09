@@ -5,14 +5,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\VoltDesk.Core\VoltDesk.Core.csproj" />
     <ProjectReference Include="..\VoltDesk.Infrastructure\VoltDesk.Infrastructure.csproj" />
+    <ProjectReference Include="..\VoltDesk.Contracts\VoltDesk.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

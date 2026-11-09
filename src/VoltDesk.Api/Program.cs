@@ -1,4 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
+using VoltDesk.Api;
+using VoltDesk.Api.Auth;
+using VoltDesk.Api.Errors;
 using VoltDesk.Infrastructure;
 using VoltDesk.Infrastructure.Persistence;
 
@@ -7,27 +10,38 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("VoltDesk")
     ?? throw new InvalidOperationException("Connection string 'VoltDesk' is not configured.");
 
+builder.Services.AddVoltDeskAuth(builder.Configuration);
 builder.Services.AddInfrastructure(connectionString);
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecurityTransformer>());
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<VoltDeskDbContext>("database");
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-
-    // Local convenience: create or upgrade the dev database and fill it with demo data on start.
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<VoltDeskDbContext>();
-    await db.Database.MigrateAsync();
-    await DemoDataSeeder.SeedAsync(db, DateOnly.FromDateTime(DateTime.Today));
+    app.MapOpenApi().AllowAnonymous();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "VoltDesk API"));
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
+
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous();
+
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    await DatabaseInitializer.InitializeAsync(app.Services, app.Configuration.GetValue<bool>("Database:SeedDemoData"));
+}
 
 app.Run();
 

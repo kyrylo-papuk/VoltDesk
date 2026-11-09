@@ -45,13 +45,14 @@ public sealed class ProjectTask : Entity
     internal static ProjectTask Create(
         DesignStage stage,
         string title,
+        string? description,
         Discipline discipline,
         TaskPriority priority,
         DateOnly? dueDate,
         decimal? estimatedHours)
     {
         var task = new ProjectTask { Stage = stage, Status = ProjectTaskStatus.ToDo };
-        task.UpdateDetails(title, description: null, discipline, priority, dueDate, estimatedHours);
+        task.UpdateDetails(title, description, discipline, priority, dueDate, estimatedHours);
         return task;
     }
 

@@ -8,6 +8,7 @@ internal sealed class ProjectConfiguration : IEntityTypeConfiguration<Project>
 {
     public void Configure(EntityTypeBuilder<Project> builder)
     {
+        builder.HasTrackingColumns();
         builder.Property(p => p.Number).HasMaxLength(Project.NumberMaxLength);
         builder.HasIndex(p => p.Number).IsUnique();
         builder.Property(p => p.Name).HasMaxLength(Project.NameMaxLength);
@@ -46,6 +47,7 @@ internal sealed class ProjectTaskConfiguration : IEntityTypeConfiguration<Projec
 {
     public void Configure(EntityTypeBuilder<ProjectTask> builder)
     {
+        builder.HasTrackingColumns();
         builder.Property(t => t.Title).HasMaxLength(ProjectTask.TitleMaxLength);
         builder.Property(t => t.Description).HasMaxLength(ProjectTask.DescriptionMaxLength);
         builder.Property(t => t.EstimatedHours).HasPrecision(6, 1);

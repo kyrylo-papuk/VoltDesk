@@ -11,5 +11,7 @@ internal sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.FullName).HasMaxLength(Employee.FullNameMaxLength);
         builder.Property(e => e.Email).HasMaxLength(Employee.EmailMaxLength);
         builder.HasIndex(e => e.Email).IsUnique();
+        builder.Property(e => e.PasswordHash).HasMaxLength(512).IsUnicode(false);
+        builder.HasTrackingColumns();
     }
 }

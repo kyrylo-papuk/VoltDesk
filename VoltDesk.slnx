@@ -1,11 +1,13 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/VoltDesk.Api/VoltDesk.Api.csproj" />
+    <Project Path="src/VoltDesk.Contracts/VoltDesk.Contracts.csproj" />
     <Project Path="src/VoltDesk.Core/VoltDesk.Core.csproj" />
     <Project Path="src/VoltDesk.Desktop/VoltDesk.Desktop.csproj" />
     <Project Path="src/VoltDesk.Infrastructure/VoltDesk.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/VoltDesk.Api.Tests/VoltDesk.Api.Tests.csproj" />
     <Project Path="tests/VoltDesk.Core.Tests/VoltDesk.Core.Tests.csproj" />
   </Folder>
 </Solution>

@@ -8,6 +8,7 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 {
     public void Configure(EntityTypeBuilder<Client> builder)
     {
+        builder.HasTrackingColumns();
         builder.Property(c => c.Name).HasMaxLength(Client.NameMaxLength);
         builder.HasIndex(c => c.Name).IsUnique();
 
