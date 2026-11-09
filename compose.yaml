@@ -1,4 +1,7 @@
-# Local development database. The password is for this local container only.
+# Full stack: SQL Server + API with demo data on http://localhost:5080.
+#   docker compose up -d        everything
+#   docker compose up -d db     only the database, when running the API from source
+# Passwords and keys below are local demo defaults; override them through the environment.
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2025-latest
@@ -17,6 +20,22 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
+
+  api:
+    build: .
+    image: voltdesk-api
+    container_name: voltdesk-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__VoltDesk: "Server=db,1433;Database=VoltDesk;User Id=sa;Password=${MSSQL_SA_PASSWORD:-VoltDesk_Dev_2026!};TrustServerCertificate=True"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-compose-demo-signing-key-change-me-0123456789}
+      Database__MigrateOnStartup: "true"
+      Database__SeedDemoData: ${SEED_DEMO_DATA:-true}
+      OpenApi__Enabled: "true"
+    ports:
+      - "5080:8080"
 
 volumes:
   voltdesk-db:
