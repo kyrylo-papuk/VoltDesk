@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VoltDesk.Api/VoltDesk.Api.csproj" />
+    <Project Path="src/VoltDesk.Core/VoltDesk.Core.csproj" />
+    <Project Path="src/VoltDesk.Desktop/VoltDesk.Desktop.csproj" />
+    <Project Path="src/VoltDesk.Infrastructure/VoltDesk.Infrastructure.csproj" />
+  </Folder>
+</Solution>

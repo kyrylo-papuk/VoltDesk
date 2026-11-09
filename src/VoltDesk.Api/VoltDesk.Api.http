@@ -1,0 +1,3 @@
+@VoltDesk.Api_HostAddress = http://localhost:5080
+
+GET {{VoltDesk.Api_HostAddress}}/health
