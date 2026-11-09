@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 
 namespace VoltDesk.Infrastructure.Persistence;
@@ -118,6 +119,44 @@ public static class DemoDataSeeder
         db.AddRange(cedarValley, ironbridge, summit, harborview, lakeshore);
         db.AddRange(surgicalWing, dataHall, plantUpgrade, towerFitOut, medicalOffice, school);
         await db.SaveChangesAsync(cancellationToken);
+
+        // Panels reference projects by id, so they are added once the projects have keys.
+        db.Panels.AddRange(SurgicalWingPanel(surgicalWing.Id), DataHallPanel(dataHall.Id));
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>208Y/120 V lighting and receptacle panel, loaded mostly on phase A to show rebalancing.</summary>
+    private static ElectricalPanel SurgicalWingPanel(int projectId)
+    {
+        var panel = ElectricalPanel.Create(
+            projectId, "LP-2A", "Level 2 electrical room", VoltageSystem.ThreePhase208Y120, busRatingAmps: 225, mainBreakerAmps: 200, spaces: 42);
+        panel.AddCircuit(1, "Lighting, operating rooms 1-2", LoadType.Lighting, 1450m, 1, 20);
+        panel.AddCircuit(2, "Lighting, corridor L2", LoadType.Lighting, 980m, 1, 20);
+        panel.AddCircuit(3, "Receptacles, OR 1", LoadType.Receptacles, 1440m, 1, 20);
+        panel.AddCircuit(5, "Receptacles, OR 2", LoadType.Receptacles, 1440m, 1, 20);
+        panel.AddCircuit(7, "Receptacles, nurse station", LoadType.Receptacles, 1260m, 1, 20);
+        panel.AddCircuit(8, "Exam lights", LoadType.Lighting, 1100m, 1, 20);
+        panel.AddCircuit(13, "Medical gas alarm panel", LoadType.Equipment, 360m, 1, 20);
+        panel.AddCircuit(14, "Ceiling exhaust fans", LoadType.Mechanical, 1800m, 1, 20);
+        panel.AddCircuit(19, "Sterilizer", LoadType.Equipment, 2600m, 1, 20);
+        panel.AddCircuit(20, "Spare", LoadType.Spare, 0m, 1, 20);
+        panel.AddCircuit(25, "Water heater WH-2", LoadType.Equipment, 4500m, 2, 30);
+        panel.AddCircuit(31, "Exhaust fan EF-3", LoadType.Mechanical, 3600m, 3, 20);
+        return panel;
+    }
+
+    /// <summary>480Y/277 V distribution panel for the data hall: large three-phase loads.</summary>
+    private static ElectricalPanel DataHallPanel(int projectId)
+    {
+        var panel = ElectricalPanel.Create(
+            projectId, "HDP-1", "Electrical room 101", VoltageSystem.ThreePhase480Y277, busRatingAmps: 400, mainBreakerAmps: 400, spaces: 42);
+        panel.AddCircuit(1, "CRAH-1", LoadType.Mechanical, 30_000m, 3, 50);
+        panel.AddCircuit(2, "CRAH-2", LoadType.Mechanical, 30_000m, 3, 50);
+        panel.AddCircuit(7, "UPS-1 input", LoadType.Equipment, 80_000m, 3, 125);
+        panel.AddCircuit(8, "Chilled water pump P-1", LoadType.Mechanical, 15_000m, 3, 25);
+        panel.AddCircuit(13, "Lighting, data hall", LoadType.Lighting, 4200m, 1, 20);
+        panel.AddCircuit(15, "Lighting, corridors", LoadType.Lighting, 2100m, 1, 20);
+        return panel;
     }
 
     /// <summary>Sets stage due dates as day offsets from today, in stage order SD, DD, CD, Permit, CA.</summary>

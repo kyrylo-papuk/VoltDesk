@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 using VoltDesk.Infrastructure.Persistence.Auditing;
 
@@ -20,6 +21,10 @@ public sealed class VoltDeskDbContext(
     public DbSet<Project> Projects => Set<Project>();
 
     public DbSet<ProjectTask> ProjectTasks => Set<ProjectTask>();
+
+    public DbSet<ElectricalPanel> Panels => Set<ElectricalPanel>();
+
+    public DbSet<Circuit> Circuits => Set<Circuit>();
 
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
 

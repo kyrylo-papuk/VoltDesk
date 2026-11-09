@@ -1,0 +1,348 @@
+<UserControl x:Class="VoltDesk.Desktop.Views.PanelScheduleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:VoltDesk.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:PanelScheduleViewModel}">
+    <UserControl.Resources>
+        <!-- A clickable half-row of the schedule. -->
+        <Style x:Key="SlotButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Cell" Background="Transparent" Padding="6,0" Height="28">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Cell" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="CellText" TargetType="TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                    <Setter Property="Foreground" Value="#CBD5E1" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="Tile" TargetType="Border" BasedOn="{StaticResource Card}">
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="Padding" Value="18,14" />
+        </Style>
+        <Style x:Key="TileValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,22,32,32">
+            <Button Content="← Back to the project" Style="{StaticResource LinkButton}" HorizontalAlignment="Left"
+                    Command="{Binding BackCommand}" AutomationProperties.AutomationId="Back" />
+
+            <Grid Margin="0,12,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Panel" Style="{StaticResource PageTitle}" Foreground="{StaticResource MutedBrush}" />
+                        <TextBlock Text="{Binding Panel.Name}" Style="{StaticResource PageTitle}" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Muted}" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button Content="Balance phases" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"
+                            Command="{Binding BalanceCommand}" AutomationProperties.AutomationId="Balance"
+                            ToolTip="Rearrange circuits across slots to even out the phase loads" />
+                    <Button Content="Export to Excel" Command="{Binding ExportCommand}" AutomationProperties.AutomationId="Export" />
+                </StackPanel>
+            </Grid>
+
+            <Border Style="{StaticResource ErrorBanner}" Margin="0,16,0,0"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhen}}">
+                <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="{StaticResource DangerBrush}"
+                           AutomationProperties.AutomationId="Error" />
+            </Border>
+            <Border Style="{StaticResource InfoBanner}" Margin="0,16,0,0"
+                    Visibility="{Binding InfoMessage, Converter={StaticResource VisibleWhen}}">
+                <TextBlock Text="{Binding InfoMessage}" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}"
+                           AutomationProperties.AutomationId="Info" />
+            </Border>
+
+            <!-- Totals -->
+            <UniformGrid Rows="1" Margin="0,20,-12,0">
+                <Border Style="{StaticResource Tile}">
+                    <StackPanel>
+                        <TextBlock Text="CONNECTED LOAD" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Style="{StaticResource TileValue}" Text="{Binding TotalKva, StringFormat={}{0:0.0} kVA}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Tile}">
+                    <StackPanel>
+                        <TextBlock Text="BALANCED 3Ø CURRENT" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Style="{StaticResource TileValue}" Text="{Binding Panel.Calculation.BalancedAmps, StringFormat={}{0:0.0} A}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Tile}">
+                    <StackPanel>
+                        <TextBlock Text="PHASE IMBALANCE" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{Binding Panel.Calculation.ImbalancePercent, StringFormat={}{0:0.#} %}"
+                                   AutomationProperties.AutomationId="Imbalance"
+                                   AutomationProperties.Name="{Binding Panel.Calculation.ImbalancePercent}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource TileValue}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsImbalanced}" Value="True">
+                                            <Setter Property="Foreground" Value="#D97706" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Tile}">
+                    <StackPanel>
+                        <TextBlock Text="BUS UTILIZATION" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Style="{StaticResource TileValue}" Text="{Binding Panel.Calculation.BusUtilizationPercent, StringFormat={}{0:0.#} %}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Phase bars -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Phase loads against the bus rating" Style="{StaticResource SectionTitle}" />
+                        <ItemsControl ItemsSource="{Binding PhaseBars}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:PhaseBar}">
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="150" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Load.Phase}" FontWeight="Bold" VerticalAlignment="Center" />
+                                        <ProgressBar Grid.Column="1" Height="10" Maximum="100" Value="{Binding Percent, Mode=OneWay}"
+                                                     Foreground="{Binding Level, Converter={StaticResource StatusBrush}, ConverterParameter=fg}">
+                                            <ProgressBar.Template>
+                                                <ControlTemplate TargetType="ProgressBar">
+                                                    <Grid>
+                                                        <Border x:Name="PART_Track" CornerRadius="5" Background="#EEF2F6" />
+                                                        <Border x:Name="PART_Indicator" CornerRadius="5" HorizontalAlignment="Left"
+                                                                Background="{TemplateBinding Foreground}" />
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </ProgressBar.Template>
+                                        </ProgressBar>
+                                        <TextBlock Grid.Column="2" Text="{Binding Text}" Style="{StaticResource Muted}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Checks -->
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Checks" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="✓ No problems found: breakers, bus and phase balance are within limits."
+                                   Foreground="{StaticResource SuccessBrush}" TextWrapping="Wrap"
+                                   Visibility="{Binding HasWarnings, Converter={StaticResource VisibleWhen}, ConverterParameter=invert}" />
+                        <ItemsControl ItemsSource="{Binding Panel.Calculation.Warnings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock DockPanel.Dock="Left" Text="⚠" Foreground="#D97706" Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Schedule and editor -->
+            <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="300" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Padding="12">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,6" TextBlock.FontSize="11" TextBlock.FontWeight="SemiBold" TextBlock.Foreground="{StaticResource MutedBrush}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Margin="6,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="60" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="CKT" />
+                                <TextBlock Grid.Column="1" Text="DESCRIPTION" />
+                                <TextBlock Grid.Column="2" Text="VA" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Column="3" Text="BRKR" HorizontalAlignment="Right" />
+                            </Grid>
+                            <TextBlock Grid.Column="1" Text="Ø" HorizontalAlignment="Center" />
+                            <Grid Grid.Column="2" Margin="6,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="30" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="BRKR" />
+                                <TextBlock Grid.Column="1" Text="VA" />
+                                <TextBlock Grid.Column="2" Text="DESCRIPTION" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Column="3" Text="CKT" HorizontalAlignment="Right" />
+                            </Grid>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding Rows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ScheduleRow}">
+                                    <Border BorderBrush="{StaticResource LineSoftBrush}" BorderThickness="0,1,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="40" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button Style="{StaticResource SlotButton}" DataContext="{Binding Left}"
+                                                    Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.AutomationId="{Binding AutomationKey}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="56" />
+                                                        <ColumnDefinition Width="60" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Number}" Foreground="{StaticResource MutedBrush}" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Text}" Style="{StaticResource CellText}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Load}" Style="{StaticResource CellText}" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding Breaker}" Style="{StaticResource CellText}" HorizontalAlignment="Right" />
+                                                </Grid>
+                                            </Button>
+                                            <Border Grid.Column="1" Width="22" Height="18" CornerRadius="4" Background="{StaticResource NeutralSoftBrush}">
+                                                <TextBlock Text="{Binding Phase}" FontSize="11" FontWeight="Bold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Button Grid.Column="2" Style="{StaticResource SlotButton}" DataContext="{Binding Right}"
+                                                    Command="{Binding DataContext.SelectSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    AutomationProperties.AutomationId="{Binding AutomationKey}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="60" />
+                                                        <ColumnDefinition Width="56" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="30" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Breaker}" Style="{StaticResource CellText}" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Load}" Style="{StaticResource CellText}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Text}" Style="{StaticResource CellText}" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="3" Text="{Binding Number}" Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Right" />
+                                                </Grid>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Circuit editor -->
+                <Border Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="{Binding EditorTitle}" Style="{StaticResource SectionTitle}" Margin="0,0,0,4" />
+                        <TextBlock Text="Click a slot in the schedule to edit it or to add a circuit there."
+                                   Style="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,14" />
+
+                        <TextBlock Text="Description" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.AutomationId="CircuitDescription" />
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Slot" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding EditSlot, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="CircuitSlot" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Load, VA" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding EditLoadVa, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="CircuitLoad" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Load type" Style="{StaticResource FieldLabel}" Margin="0,12,0,4" />
+                        <ComboBox ItemsSource="{Binding LoadTypes}" SelectedItem="{Binding EditLoadType}" />
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Poles" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding PoleOptions}" SelectedItem="{Binding EditPoles}"
+                                          IsEnabled="{Binding IsEditing, Converter={StaticResource EqualsConverter}, ConverterParameter=False}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Breaker, A" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding BreakerOptions}" SelectedItem="{Binding EditBreakerAmps}"
+                                          AutomationProperties.AutomationId="CircuitBreaker" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button Content="Save circuit" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCircuitCommand}"
+                                    AutomationProperties.AutomationId="SaveCircuit" />
+                            <Button Content="Remove" Style="{StaticResource DangerButton}" Margin="8,0,0,0" Command="{Binding RemoveCircuitCommand}"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource VisibleWhen}}" />
+                        </StackPanel>
+                        <Button Content="+ New circuit" Style="{StaticResource LinkButton}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                                Command="{Binding NewCircuitCommand}" Visibility="{Binding IsEditing, Converter={StaticResource VisibleWhen}}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

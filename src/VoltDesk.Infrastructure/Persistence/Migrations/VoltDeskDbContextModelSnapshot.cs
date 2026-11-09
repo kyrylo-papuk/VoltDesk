@@ -144,6 +144,100 @@ namespace VoltDesk.Infrastructure.Persistence.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("VoltDesk.Core.Panels.Circuit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BreakerAmps")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LoadType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<decimal>("LoadVa")
+                        .HasPrecision(12, 1)
+                        .HasColumnType("decimal(12,1)");
+
+                    b.Property<int>("PanelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Poles")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Slot")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PanelId");
+
+                    b.ToTable("Circuits");
+                });
+
+            modelBuilder.Entity("VoltDesk.Core.Panels.ElectricalPanel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BusRatingAmps")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("MainBreakerAmps")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Spaces")
+                        .HasColumnType("int");
+
+                    b.Property<string>("System")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ElectricalPanels", (string)null);
+                });
+
             modelBuilder.Entity("VoltDesk.Core.Projects.Project", b =>
                 {
                     b.Property<int>("Id")
@@ -357,6 +451,24 @@ namespace VoltDesk.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("VoltDesk.Core.Panels.Circuit", b =>
+                {
+                    b.HasOne("VoltDesk.Core.Panels.ElectricalPanel", null)
+                        .WithMany("Circuits")
+                        .HasForeignKey("PanelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("VoltDesk.Core.Panels.ElectricalPanel", b =>
+                {
+                    b.HasOne("VoltDesk.Core.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("VoltDesk.Core.Projects.Project", b =>
                 {
                     b.HasOne("VoltDesk.Core.Clients.Client", "Client")
@@ -428,6 +540,11 @@ namespace VoltDesk.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("VoltDesk.Core.Clients.Client", b =>
                 {
                     b.Navigation("Contacts");
+                });
+
+            modelBuilder.Entity("VoltDesk.Core.Panels.ElectricalPanel", b =>
+                {
+                    b.Navigation("Circuits");
                 });
 
             modelBuilder.Entity("VoltDesk.Core.Projects.Project", b =>

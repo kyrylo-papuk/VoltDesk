@@ -109,6 +109,61 @@
                 </StackPanel>
             </Border>
 
+            <!-- Panel schedules -->
+            <Border Style="{StaticResource Card}" Margin="0,20,0,0">
+                <StackPanel>
+                    <TextBlock Text="Panel schedules" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="No panels yet." Style="{StaticResource Muted}" Margin="0,0,0,8"
+                               Visibility="{Binding Panels.Count, Converter={StaticResource VisibleWhen}, ConverterParameter=invert}" />
+                    <ItemsControl ItemsSource="{Binding Panels}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type contracts:PanelSummaryDto}">
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="80" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Location}" Style="{StaticResource Muted}"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding TotalKva, StringFormat={}{0:0.0} kVA}" />
+                                    <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="{Binding ImbalancePercent, StringFormat={}{0:0.#} % imbalance}" />
+                                    <TextBlock Grid.Column="4" VerticalAlignment="Center" Foreground="#D97706"
+                                               Text="{Binding WarningCount, StringFormat={}{0} warnings}"
+                                               Visibility="{Binding WarningCount, Converter={StaticResource VisibleWhen}}" />
+                                    <Button Grid.Column="5" Content="Open →" Style="{StaticResource LinkButton}" HorizontalAlignment="Right"
+                                            Command="{Binding DataContext.OpenPanelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            AutomationProperties.AutomationId="{Binding Name, StringFormat=Open panel {0}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                Visibility="{Binding CanEditPanels, Converter={StaticResource VisibleWhen}}">
+                        <TextBox Width="140" Tag="Panel name" Text="{Binding NewPanelName, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.AutomationId="NewPanelName" />
+                        <ComboBox Width="190" Margin="8,0,0,0" ItemsSource="{Binding VoltageSystems}" SelectedItem="{Binding NewPanelSystem}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource EnumDisplay}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <ComboBox Width="110" Margin="8,0,0,0" ItemsSource="{Binding BusRatings}" SelectedItem="{Binding NewPanelBus}"
+                                  ItemStringFormat="{}{0} A bus" />
+                        <ComboBox Width="120" Margin="8,0,0,0" ItemsSource="{Binding SpaceOptions}" SelectedItem="{Binding NewPanelSpaces}"
+                                  ItemStringFormat="{}{0} spaces" />
+                        <Button Content="Add panel" Margin="8,0,0,0" Command="{Binding CreatePanelCommand}"
+                                AutomationProperties.AutomationId="AddPanel" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Tasks and history -->
             <Grid Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>

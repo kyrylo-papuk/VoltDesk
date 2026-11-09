@@ -98,6 +98,54 @@ public sealed class ApiClient(HttpClient http)
     public Task<TaskDto> MoveTaskAsync(int id, ProjectTaskStatus status, string version) =>
         SendAsync<TaskDto>(HttpMethod.Put, $"api/tasks/{id}/status", new MoveTaskRequest(status, version));
 
+    // Panel schedules
+    public Task<List<PanelSummaryDto>> GetPanelsAsync(int projectId) =>
+        SendAsync<List<PanelSummaryDto>>(HttpMethod.Get, $"api/projects/{projectId}/panels");
+
+    public Task<PanelDto> CreatePanelAsync(int projectId, CreatePanelRequest request) =>
+        SendAsync<PanelDto>(HttpMethod.Post, $"api/projects/{projectId}/panels", request);
+
+    public Task<PanelDto> GetPanelAsync(int id) => SendAsync<PanelDto>(HttpMethod.Get, $"api/panels/{id}");
+
+    public Task<PanelDto> AddCircuitAsync(int panelId, CircuitRequest request) =>
+        SendAsync<PanelDto>(HttpMethod.Post, $"api/panels/{panelId}/circuits", request);
+
+    public Task<PanelDto> UpdateCircuitAsync(int panelId, int circuitId, CircuitRequest request) =>
+        SendAsync<PanelDto>(HttpMethod.Put, $"api/panels/{panelId}/circuits/{circuitId}", request);
+
+    public Task<PanelDto> RemoveCircuitAsync(int panelId, int circuitId, string version) =>
+        SendAsync<PanelDto>(HttpMethod.Delete, WithQuery($"api/panels/{panelId}/circuits/{circuitId}", ("version", version)));
+
+    public Task<BalanceResultDto> BalancePanelAsync(int panelId, string version) =>
+        SendAsync<BalanceResultDto>(HttpMethod.Post, $"api/panels/{panelId}/balance", new VersionRequest(version));
+
+    /// <summary>Downloads the panel schedule workbook with the file name the server suggests.</summary>
+    public async Task<(byte[] Content, string FileName)> ExportPanelAsync(int panelId)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await http.GetAsync($"api/panels/{panelId}/export");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            throw ApiException.Unreachable();
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                throw await ApiException.FromResponseAsync(response);
+            }
+
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+                ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                ?? "panel schedule.xlsx";
+            return (await response.Content.ReadAsByteArrayAsync(), fileName);
+        }
+    }
+
     // Employees
     public Task<List<EmployeeDto>> GetEmployeesAsync() => SendAsync<List<EmployeeDto>>(HttpMethod.Get, "api/employees");
 

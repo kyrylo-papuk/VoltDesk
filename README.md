@@ -36,6 +36,29 @@ Business rules live in `VoltDesk.Core` and are covered by unit tests:
   no duplicate contact emails (also enforced by a filtered unique index).
 - Locations use real US state codes. Enums are stored as readable strings in the database.
 
+## Panel schedules
+
+The engineering core. A panel is modelled like the real thing: circuit numbers are slots, odd on
+the left and even on the right, and each row of two slots sits on phase A, B, C, A, B, C… in turn.
+A two-pole breaker at slot 1 takes slots 1 and 3 (phases A and B); a three-pole breaker takes 1, 3, 5.
+
+| Check / calculation | Rule |
+|---|---|
+| Phase load | Sum of VA per phase; a multi-pole load is split evenly over its poles |
+| Phase current | Phase VA / line-to-neutral voltage (120 V or 277 V) |
+| Balanced current | Total VA / (√3 × line-to-line voltage) |
+| Phase imbalance | NEMA definition: largest deviation from the average current, over the average |
+| Breaker size | Load current × 125% must not exceed the breaker (NEC 210.20(A)); ratings from NEC 240.6(A) |
+| Bus and main | Heaviest phase against the bus rating and, at 125%, against the main breaker |
+
+**Phase balancing** rearranges circuits across slots with a greedy longest-processing-time pass:
+three- and two-pole breakers first, then single-pole loads from largest to smallest, each placed
+where it leaves the most loaded phase lightest. The new layout is kept only if it is better. On
+the demo panel LP-2A it takes the imbalance from 90% to 7%.
+
+**Excel export** writes the schedule with per-phase VA columns whose totals are `SUM` formulas,
+so the workbook stays correct when someone edits a load by hand.
+
 ## API
 
 REST API under `/api`, documented with OpenAPI (Swagger UI at `/swagger` in Development).
@@ -46,9 +69,10 @@ REST API under `/api`, documented with OpenAPI (Swagger UI at `/swagger` in Deve
 | Clients | list with search, details, create, rename, add / edit / remove contacts, history |
 | Projects | list with filters, details with milestones and tasks, create, edit, change manager, schedule milestones, advance / hold / resume / cancel, history |
 | Tasks | list, my open tasks, create, edit, assign, move on the board |
+| Panels | list per project, create, edit, add / edit / move / remove circuits, balance phases, Excel export, history |
 | Employees | list, create, change role, deactivate / reactivate |
 
-**Roles.** Engineers read everything and work on tasks. Project managers also manage clients,
+**Roles.** Engineers read everything, work on tasks and edit panel schedules. Project managers also manage clients,
 projects and tasks. Admins also manage employees. Every token is checked against the database
 on each request, so deactivating an employee or changing their role takes effect immediately.
 
@@ -87,6 +111,7 @@ on each request, so deactivating an employee or changing their role takes effect
 | Project card | Stage timeline with editable due dates, close stage / hold / resume / cancel, tasks by stage, change history |
 | Task board | Kanban of tasks in active projects: drag cards or use arrows, filter by project and assignee, edit and assign in a side panel, new task dialog |
 | Clients | Client list with search, contacts with primary flag, add and remove contacts |
+| Panel schedule | Totals, phase load bars against the bus, checks, two-sided schedule with clickable slots, circuit editor, balance, Excel export |
 | New project | Dialog with client, building type, US state and manager pickers |
 
 - MVVM throughout: pages are view models, views are picked by `DataTemplate`, navigation keeps a back stack.
@@ -148,6 +173,6 @@ dotnet ef migrations add <Name> --project src/VoltDesk.Infrastructure \
 - [x] 2. REST API: CRUD, validation, JWT roles, audit log, integration tests
 - [x] 3. Desktop: sign-in, project list and cards, clients
 - [x] 4. Desktop: task board
-- [ ] 5. Panel schedules: load calculation, phase balancing, Excel export
+- [x] 5. Panel schedules: load calculation, phase balancing, Excel export
 - [ ] 6. Google Drive, Calendar and Sheets automation
 - [ ] 7. Packaging: Docker Compose, installer in Releases, demo

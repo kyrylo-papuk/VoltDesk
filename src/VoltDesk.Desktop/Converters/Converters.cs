@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 
 namespace VoltDesk.Desktop.Converters;
@@ -15,6 +16,7 @@ public sealed partial class EnumDisplayConverter : IValueConverter
         null => null,
         DesignStage stage when (parameter as string) == "abbr" => stage.Abbreviation(),
         DesignStage stage => stage.DisplayName(),
+        VoltageSystem system => system.Label(),
         Enum e => Humanize(e.ToString()),
         _ => value.ToString(),
     };
@@ -46,6 +48,9 @@ public sealed class StatusBrushConverter : IValueConverter
         ["Cancelled"] = Pair("#FEE2E2", "#B91C1C"),
         ["High"] = Pair("#FEE2E2", "#B91C1C"),
         ["Overdue"] = Pair("#FEE2E2", "#B91C1C"),
+        ["Overload"] = Pair("#FEE2E2", "#DC2626"),
+        ["Heavy"] = Pair("#FEF3C7", "#D97706"),
+        ["Normal"] = Pair("#DBEAFE", "#2563EB"),
     };
 
     private static readonly (Brush Background, Brush Foreground) Neutral = Pair("#F1F5F9", "#475569");

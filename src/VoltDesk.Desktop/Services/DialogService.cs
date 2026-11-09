@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using VoltDesk.Contracts;
@@ -23,6 +24,19 @@ public sealed class DialogService(IServiceProvider services)
         await viewModel.LoadAsync();
         window.ShowDialog();
         return created;
+    }
+
+    /// <summary>Asks where to save a file and writes it. Returns the chosen path, or null if cancelled.</summary>
+    public string? SaveFile(byte[] content, string suggestedName, string filter)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog { FileName = suggestedName, Filter = filter, AddExtension = true };
+        if (dialog.ShowDialog(Application.Current.MainWindow) != true)
+        {
+            return null;
+        }
+
+        File.WriteAllBytes(dialog.FileName, content);
+        return dialog.FileName;
     }
 
     public async Task<TaskDto?> ShowNewTaskAsync(int? projectId)

@@ -1,6 +1,7 @@
 using VoltDesk.Contracts;
 using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 using VoltDesk.Infrastructure.Persistence;
 
@@ -42,6 +43,59 @@ internal static class Mapping
             .ThenByDescending(t => t.Priority)
             .Select(t => t.ToDto(db, project.Number))],
         db.Entry(project).Version());
+
+    public static PanelDto ToDto(this ElectricalPanel panel, VoltDeskDbContext db, string projectNumber)
+    {
+        var calculation = panel.Calculate();
+        return new PanelDto(
+            panel.Id,
+            panel.ProjectId,
+            projectNumber,
+            panel.Name,
+            panel.Location,
+            panel.System,
+            panel.BusRatingAmps,
+            panel.MainBreakerAmps,
+            panel.Spaces,
+            [.. calculation.Circuits.Select(load => new CircuitDto(
+                load.Circuit.Id,
+                load.Circuit.Slot,
+                load.Circuit.Slots,
+                load.Circuit.Label,
+                load.Circuit.Description,
+                load.Circuit.LoadType,
+                load.Circuit.LoadVa,
+                load.Circuit.Poles,
+                load.Circuit.BreakerAmps,
+                Math.Round(load.Amps, 1),
+                load.BreakerTooSmall))],
+            calculation.ToDto(),
+            db.Entry(panel).Version());
+    }
+
+    public static PanelSummaryDto ToSummaryDto(this ElectricalPanel panel)
+    {
+        var calculation = panel.Calculate();
+        return new PanelSummaryDto(
+            panel.Id,
+            panel.ProjectId,
+            panel.Name,
+            panel.Location,
+            panel.System,
+            panel.BusRatingAmps,
+            panel.Circuits.Count,
+            Math.Round(calculation.TotalKva, 1),
+            Math.Round(calculation.ImbalancePercent, 1),
+            calculation.Warnings.Count);
+    }
+
+    public static PanelCalculationDto ToDto(this PanelCalculation calculation) => new(
+        [.. calculation.Phases.Select(p => new PhaseLoadDto(p.Phase, Math.Round(p.Va, 0), Math.Round(p.Amps, 1)))],
+        Math.Round(calculation.TotalVa, 0),
+        Math.Round(calculation.BalancedAmps, 1),
+        Math.Round(calculation.ImbalancePercent, 1),
+        Math.Round(calculation.BusUtilizationPercent, 1),
+        calculation.Warnings);
 
     public static TaskDto ToDto(this ProjectTask task, VoltDeskDbContext db, string projectNumber) => new(
         task.Id,

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using VoltDesk.Core.Clients;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 
 namespace VoltDesk.Infrastructure.Persistence;
@@ -27,7 +28,7 @@ public static class Tracking
     /// <summary>
     /// Sets timestamps and touches aggregate roots whose children changed. Touching updates the
     /// root row, so its rowversion is checked and bumped: a stale edit of a contact or a milestone
-    /// is rejected just like a stale edit of the client or project itself.
+    /// is rejected just like a stale edit of the client or project itself. Circuits touch their panel.
     /// </summary>
     internal static void Stamp(ChangeTracker tracker, DateTimeOffset now)
     {
@@ -42,6 +43,9 @@ public static class Tracking
             {
                 case Contact contact:
                     Touch(tracker.Entries<Client>().FirstOrDefault(c => c.Entity.Id == contact.ClientId), now);
+                    break;
+                case Circuit circuit:
+                    Touch(tracker.Entries<ElectricalPanel>().FirstOrDefault(p => p.Entity.Id == circuit.PanelId), now);
                     break;
                 case ProjectMilestone when entry.State == EntityState.Modified:
                     var projectId = (int)entry.Property("ProjectId").CurrentValue!;

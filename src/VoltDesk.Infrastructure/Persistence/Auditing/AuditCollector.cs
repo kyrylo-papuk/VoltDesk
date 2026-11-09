@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using VoltDesk.Contracts;
 using VoltDesk.Core.Clients;
 using VoltDesk.Core.Employees;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 
 namespace VoltDesk.Infrastructure.Persistence.Auditing;
@@ -113,6 +114,7 @@ internal static class AuditCollector
             ProjectMilestone => new("Project", Read("ProjectId"), "Project", Read("ProjectId")),
             ProjectTask task => new(nameof(ProjectTask), task.Id, nameof(Project), task.ProjectId),
             Contact contact => new(nameof(Contact), contact.Id, nameof(Client), contact.ClientId),
+            Circuit circuit => new(nameof(Circuit), circuit.Id, nameof(ElectricalPanel), circuit.PanelId),
             _ => new(entry.Metadata.ClrType.Name, Read("Id"), entry.Metadata.ClrType.Name, Read("Id")),
         };
     }

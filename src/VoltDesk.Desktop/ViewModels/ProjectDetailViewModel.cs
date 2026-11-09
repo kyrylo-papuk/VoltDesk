@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoltDesk.Contracts;
+using VoltDesk.Core.Panels;
 using VoltDesk.Core.Projects;
 using VoltDesk.Desktop.Converters;
 using VoltDesk.Desktop.Services;
@@ -54,7 +55,7 @@ public sealed partial class ProjectDetailViewModel(ApiClient api, Session sessio
     public override string Section => "Projects";
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanAdvance), nameof(CanHold), nameof(CanResume), nameof(CanCancel), nameof(Subtitle))]
+    [NotifyPropertyChangedFor(nameof(CanAdvance), nameof(CanHold), nameof(CanResume), nameof(CanCancel), nameof(Subtitle), nameof(CanEditPanels))]
     public partial ProjectDto? Project { get; set; }
 
     public ObservableCollection<MilestoneRow> Milestones { get; } = [];
@@ -62,6 +63,29 @@ public sealed partial class ProjectDetailViewModel(ApiClient api, Session sessio
     public ObservableCollection<TaskGroup> TaskGroups { get; } = [];
 
     public ObservableCollection<HistoryRow> History { get; } = [];
+
+    public ObservableCollection<PanelSummaryDto> Panels { get; } = [];
+
+    public IReadOnlyList<VoltageSystem> VoltageSystems { get; } = Enum.GetValues<VoltageSystem>();
+
+    public IReadOnlyList<int> BusRatings { get; } = ElectricalPanel.StandardBusAmps;
+
+    public IReadOnlyList<int> SpaceOptions { get; } = ElectricalPanel.StandardSpaces;
+
+    [ObservableProperty]
+    public partial string NewPanelName { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial VoltageSystem NewPanelSystem { get; set; } = VoltageSystem.ThreePhase208Y120;
+
+    [ObservableProperty]
+    public partial int NewPanelBus { get; set; } = 225;
+
+    [ObservableProperty]
+    public partial int NewPanelSpaces { get; set; } = 42;
+
+    /// <summary>Panels of active projects can be added and edited by anyone, engineers included.</summary>
+    public bool CanEditPanels => Project?.Status == ProjectStatus.Active;
 
     public bool CanManage => session.CanManageProjects;
 
@@ -107,6 +131,28 @@ public sealed partial class ProjectDetailViewModel(ApiClient api, Session sessio
         },
         onConflict: () => ReloadAsync(Project!.Id));
 
+    [RelayCommand]
+    private Task OpenPanelAsync(PanelSummaryDto panel) =>
+        navigator.OpenAsync<PanelScheduleViewModel>(page => page.LoadAsync(panel.Id));
+
+    [RelayCommand]
+    private async Task CreatePanelAsync()
+    {
+        PanelDto? created = null;
+        await RunAsync(async () =>
+        {
+            // The main breaker defaults to the bus rating, a common choice for a main-breaker panel.
+            created = await api.CreatePanelAsync(Project!.Id, new CreatePanelRequest(
+                NewPanelName.Trim(), Location: null, NewPanelSystem, NewPanelBus, MainBreakerAmps: NewPanelBus, NewPanelSpaces));
+        });
+
+        if (created is not null)
+        {
+            NewPanelName = string.Empty;
+            await navigator.OpenAsync<PanelScheduleViewModel>(page => page.LoadAsync(created.Id));
+        }
+    }
+
     private Task ChangeStateAsync(string action, string done) => RunAsync(
         async () =>
         {
@@ -134,6 +180,12 @@ public sealed partial class ProjectDetailViewModel(ApiClient api, Session sessio
         {
             var open = group.Count(t => t.Status != ProjectTaskStatus.Done);
             TaskGroups.Add(new TaskGroup($"{group.Key.DisplayName()} · {open} open of {group.Count()}", [.. group]));
+        }
+
+        Panels.Clear();
+        foreach (var panel in await api.GetPanelsAsync(project.Id))
+        {
+            Panels.Add(panel);
         }
 
         History.Clear();
